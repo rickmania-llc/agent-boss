@@ -1,0 +1,19 @@
+{
+  "name": "agent-boss",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"yarn workspace agent-boss-backend dev\" \"yarn workspace agent-boss-frontend dev\"",
+    "build": "yarn workspace agent-boss-backend build && yarn workspace agent-boss-frontend build",
+    "lint": "yarn workspace agent-boss-backend lint && yarn workspace agent-boss-frontend lint",
+    "test": "yarn workspace agent-boss-backend test && yarn workspace agent-boss-frontend test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "husky": "^9.0.11",
+    "prettier": "^3.2.5"
+  }
+}
