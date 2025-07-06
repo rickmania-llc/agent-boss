@@ -9,7 +9,7 @@ class ClaudeAgentSpawner {
 
   async spawnAgent(agentId, workspacePath) {
     console.log(`Spawning Claude agent: ${agentId}`);
-    
+
     // Ensure workspace exists
     if (!fs.existsSync(workspacePath)) {
       fs.mkdirSync(workspacePath, { recursive: true });
@@ -29,23 +29,24 @@ You are agent ${agentId}. Your task is to:
 Use the current directory for all file operations.
     `;
 
-    fs.writeFileSync(
-      path.join(workspacePath, 'INSTRUCTIONS.md'), 
-      instructions
-    );
+    fs.writeFileSync(path.join(workspacePath, 'INSTRUCTIONS.md'), instructions);
 
     // Spawn Claude process WITHOUT --print flag to allow tool execution
-    const claudeProcess = spawn('claude', [
-      '--dangerously-skip-permissions',
-      'Please read the INSTRUCTIONS.md file and complete all tasks. Remember to type "exit" when done.'
-    ], {
-      cwd: workspacePath,
-      env: {
-        ...process.env,
-        AGENT_ID: agentId
-      },
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    const claudeProcess = spawn(
+      'claude',
+      [
+        '--dangerously-skip-permissions',
+        'Please read the INSTRUCTIONS.md file and complete all tasks. Remember to type "exit" when done.',
+      ],
+      {
+        cwd: workspacePath,
+        env: {
+          ...process.env,
+          AGENT_ID: agentId,
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }
+    );
 
     // Auto-exit after 15 seconds to prevent hanging
     const exitTimer = setTimeout(() => {
@@ -56,21 +57,21 @@ Use the current directory for all file operations.
     }, 15000);
 
     // Capture stdout
-    claudeProcess.stdout.on('data', (data) => {
+    claudeProcess.stdout.on('data', data => {
       console.log(`[${agentId}] STDOUT: ${data}`);
     });
 
     // Capture stderr
-    claudeProcess.stderr.on('data', (data) => {
+    claudeProcess.stderr.on('data', data => {
       console.error(`[${agentId}] STDERR: ${data}`);
     });
 
     // Handle exit
-    claudeProcess.on('exit', (code) => {
+    claudeProcess.on('exit', code => {
       console.log(`[${agentId}] Process exited with code ${code}`);
       clearTimeout(exitTimer);
       this.agents.delete(agentId);
-      
+
       // Check what files were created
       const files = fs.readdirSync(workspacePath);
       console.log(`[${agentId}] Files in workspace:`, files);
@@ -80,7 +81,7 @@ Use the current directory for all file operations.
     this.agents.set(agentId, {
       process: claudeProcess,
       pid: claudeProcess.pid,
-      startTime: new Date()
+      startTime: new Date(),
     });
 
     console.log(`Agent ${agentId} started with PID: ${claudeProcess.pid}`);
@@ -117,14 +118,14 @@ async function test() {
   // Clean up old workspace files
   const workspace1 = path.join(__dirname, 'workspaces-fixed', 'agent1');
   const workspace2 = path.join(__dirname, 'workspaces-fixed', 'agent2');
-  
+
   // Spawn first agent
   await spawner.spawnAgent('test-agent-1', workspace1);
 
   // Wait a bit and spawn another
   setTimeout(async () => {
     await spawner.spawnAgent('test-agent-2', workspace2);
-    
+
     // List active agents
     spawner.listAgents();
   }, 2000);
