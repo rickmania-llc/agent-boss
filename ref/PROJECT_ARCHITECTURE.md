@@ -7,9 +7,11 @@ The Agent Boss is a lightweight system that manages multiple Claude Code instanc
 ## System Overview
 
 ### Core Concept
+
 Instead of using containers or complex infrastructure, the orchestrator spawns Claude Code processes directly on your local machine - exactly as if you opened multiple terminal windows and ran `claude code` in each one. This provides a simple, efficient way to parallelize AI-assisted development work.
 
 ### Key Features
+
 - Direct process spawning of Claude Code instances
 - Web-based management interface
 - Real-time progress monitoring
@@ -98,74 +100,74 @@ export class OrchestratorServer {
   private workItemService: WorkItemService;
   private db: Database;
   private config: OrchestratorConfig;
-  
+
   constructor(config: OrchestratorConfig) {
     this.config = config;
     this.app = express();
     const server = createServer(this.app);
-    this.io = new Server(server, { cors: { origin: "http://localhost:3000" } });
-    
+    this.io = new Server(server, { cors: { origin: 'http://localhost:3000' } });
+
     // Initialize services
     this.db = new Database(config.databasePath || '~/.agent-boss/database/orchestrator.db');
     this.agentManager = new AgentManager(this.io);
     this.workItemService = new WorkItemService(this.db, this.agentManager, config);
-    
+
     this.setupRoutes();
     this.setupWebSocket();
   }
-  
+
   private setupRoutes() {
     // Work item endpoints
     this.app.post('/api/work-items', async (req, res) => {
       const workItem = await this.workItemService.createFromIssue(req.body.issueId);
       res.json(workItem);
     });
-    
+
     this.app.post('/api/work-items/:id/start-phase/:phase', async (req, res) => {
       const { id, phase } = req.params;
       const agent = await this.agentManager.startPhase(id, phase);
       res.json({ agentId: agent.id, status: 'started' });
     });
-    
+
     this.app.get('/api/work-items/:id/artifacts', async (req, res) => {
       const artifacts = await this.workItemService.getArtifacts(req.params.id);
       res.json(artifacts);
     });
-    
+
     this.app.post('/api/work-items/:id/request-revision', async (req, res) => {
       const revision = await this.workItemService.requestRevision(
-        req.params.id, 
-        req.body.phase, 
+        req.params.id,
+        req.body.phase,
         req.body.feedback
       );
       res.json(revision);
     });
-    
+
     // Configuration endpoint
     this.app.get('/api/config', async (req, res) => {
       res.json({
         gitProvider: this.config.gitProvider,
         gitlabUrl: this.config.gitlab?.url,
         githubOwner: this.config.github?.owner,
-        githubRepo: this.config.github?.repo
+        githubRepo: this.config.github?.repo,
       });
     });
   }
-  
+
   private setupWebSocket() {
-    this.io.on('connection', (socket) => {
+    this.io.on('connection', socket => {
       console.log('Client connected');
-      
-      socket.on('subscribe-work-item', (workItemId) => {
+
+      socket.on('subscribe-work-item', workItemId => {
         socket.join(`work-item-${workItemId}`);
       });
-      
+
       socket.on('subscribe-agents', () => {
         socket.join('agents');
       });
     });
   }
-  
+
   async start(port: number = 3001) {
     await this.db.initialize();
     server.listen(port, () => {
@@ -202,26 +204,26 @@ export class AgentManager extends EventEmitter {
   private agents: Map<string, Agent> = new Map();
   private maxConcurrentAgents = 5;
   private baseDir = path.join(process.env.HOME!, '.agent-boss');
-  
+
   constructor(private io: Server) {
     super();
     this.ensureDirectories();
   }
-  
+
   private async ensureDirectories() {
     await fs.mkdir(path.join(this.baseDir, 'agents'), { recursive: true });
     await fs.mkdir(path.join(this.baseDir, 'work-items'), { recursive: true });
     await fs.mkdir(path.join(this.baseDir, 'database'), { recursive: true });
     await fs.mkdir(path.join(this.baseDir, 'logs'), { recursive: true });
   }
-  
+
   async startPhase(workItemId: string, phase: string): Promise<Agent> {
     // Check if we're at capacity
     const activeAgents = Array.from(this.agents.values()).filter(a => a.status === 'busy');
     if (activeAgents.length >= this.maxConcurrentAgents) {
       throw new Error('Agent capacity reached. Please wait for an agent to finish.');
     }
-    
+
     // Check if this phase is already running for this work item
     const existingAgent = Array.from(this.agents.values()).find(
       a => a.workItemId === workItemId && a.type === phase && a.status === 'busy'
@@ -229,51 +231,51 @@ export class AgentManager extends EventEmitter {
     if (existingAgent) {
       throw new Error(`Phase ${phase} is already running for this work item`);
     }
-    
+
     // Create agent
     const agentId = `${phase}-${Date.now()}`;
     const agent = await this.spawnAgent(agentId, phase, workItemId);
-    
+
     // Broadcast agent status
     this.io.to('agents').emit('agent-started', {
       agentId: agent.id,
       workItemId,
       phase,
-      pid: agent.pid
+      pid: agent.pid,
     });
-    
+
     return agent;
   }
-  
+
   private async spawnAgent(agentId: string, phase: string, workItemId: string): Promise<Agent> {
     // Create agent workspace
     const workspace = path.join(this.baseDir, 'agents', agentId);
     await fs.mkdir(workspace, { recursive: true });
-    
+
     // Prepare task instructions
     await this.prepareAgentWorkspace(workspace, workItemId, phase);
-    
+
     // Create MCP configuration
     const mcpConfigPath = await this.createMCPConfig(workspace, phase);
-    
+
     // Log agent start
     console.log(`Spawning Claude agent ${agentId} for ${phase} of ${workItemId}`);
-    
+
     // Spawn Claude process
-    const claudeProcess = spawn('claude', [
-      'code',
-      '--workspace', workspace,
-      '--mcp-config', mcpConfigPath
-    ], {
-      cwd: workspace,
-      env: {
-        ...process.env,
-        AI_ORCHESTRATOR_AGENT_ID: agentId,
-        AI_ORCHESTRATOR_WORK_ITEM: workItemId,
-        AI_ORCHESTRATOR_PHASE: phase
+    const claudeProcess = spawn(
+      'claude',
+      ['code', '--workspace', workspace, '--mcp-config', mcpConfigPath],
+      {
+        cwd: workspace,
+        env: {
+          ...process.env,
+          AI_ORCHESTRATOR_AGENT_ID: agentId,
+          AI_ORCHESTRATOR_WORK_ITEM: workItemId,
+          AI_ORCHESTRATOR_PHASE: phase,
+        },
       }
-    });
-    
+    );
+
     // Create agent object
     const agent: Agent = {
       id: agentId,
@@ -283,113 +285,113 @@ export class AgentManager extends EventEmitter {
       status: 'busy',
       startTime: new Date(),
       workspace,
-      pid: claudeProcess.pid!
+      pid: claudeProcess.pid!,
     };
-    
+
     // Set up process monitoring
     this.monitorAgent(agent);
-    
+
     // Store agent
     this.agents.set(agentId, agent);
-    
+
     return agent;
   }
-  
+
   private monitorAgent(agent: Agent) {
     const logFile = path.join(this.baseDir, 'logs', `${agent.id}.log`);
     const logStream = fs.createWriteStream(logFile, { flags: 'a' });
-    
+
     // Monitor stdout for progress
-    agent.process.stdout?.on('data', (data) => {
+    agent.process.stdout?.on('data', data => {
       const output = data.toString();
       logStream.write(`[STDOUT] ${output}`);
-      
+
       // Parse progress indicators
       if (output.includes('PROGRESS:')) {
         const progress = this.parseProgress(output);
         this.io.to(`work-item-${agent.workItemId}`).emit('progress', {
           agentId: agent.id,
           phase: agent.type,
-          progress
+          progress,
         });
       }
-      
+
       // Check for artifact creation
       if (output.includes('ARTIFACT_CREATED:')) {
         const artifactPath = this.parseArtifactPath(output);
         this.handleArtifactCreated(agent, artifactPath);
       }
     });
-    
+
     // Monitor stderr
-    agent.process.stderr?.on('data', (data) => {
+    agent.process.stderr?.on('data', data => {
       const error = data.toString();
       logStream.write(`[STDERR] ${error}`);
       console.error(`[${agent.id}] Error: ${error}`);
     });
-    
+
     // Monitor process exit
-    agent.process.on('exit', (code) => {
+    agent.process.on('exit', code => {
       console.log(`Agent ${agent.id} exited with code ${code}`);
       agent.status = code === 0 ? 'idle' : 'error';
-      
+
       this.io.to('agents').emit('agent-finished', {
         agentId: agent.id,
         exitCode: code,
-        duration: Date.now() - agent.startTime.getTime()
+        duration: Date.now() - agent.startTime.getTime(),
       });
-      
+
       // Archive agent workspace if successful
       if (code === 0) {
         this.archiveAgentWorkspace(agent);
       }
-      
+
       logStream.end();
     });
   }
-  
+
   private async prepareAgentWorkspace(workspace: string, workItemId: string, phase: string) {
     // Copy work item context
     const workItemDir = path.join(this.baseDir, 'work-items', workItemId);
-    
+
     // Create instructions based on phase
     let instructions = '';
-    
+
     switch (phase) {
       case 'phase1':
         const contextItems = await this.loadContextItems(workItemId);
         instructions = this.generatePhase1Instructions(workItemId, contextItems);
         break;
-        
+
       case 'phase2':
         const artifacts = await this.loadPhase1Artifacts(workItemId);
         instructions = this.generatePhase2Instructions(workItemId, artifacts);
-        
+
         // Copy Phase 1 artifacts to agent workspace
         const phase1Dir = path.join(workItemDir, 'phase1', 'artifacts');
         const contextDir = path.join(workspace, 'context');
         await fs.mkdir(contextDir, { recursive: true });
         await this.copyDirectory(phase1Dir, contextDir);
         break;
-        
+
       case 'phase3':
         const plan = await this.loadImplementationPlan(workItemId);
         instructions = this.generatePhase3Instructions(workItemId, plan);
-        
+
         // Copy Phase 2 plan to agent workspace
         const planFile = path.join(workItemDir, 'phase2', 'implementation-plan.md');
         await fs.copyFile(planFile, path.join(workspace, 'implementation-plan.md'));
         break;
     }
-    
+
     // Write instructions
     await fs.writeFile(path.join(workspace, 'INSTRUCTIONS.md'), instructions);
-    
+
     // Create output directories
     await fs.mkdir(path.join(workspace, 'artifacts'), { recursive: true });
     await fs.mkdir(path.join(workspace, 'output'), { recursive: true });
   }
-  
+
   private generatePhase1Instructions(workItemId: string, contextItems: any[]): string {
     return `# Phase 1: Research and Context Building
 
@@ -399,7 +401,9 @@ export class AgentManager extends EventEmitter {
 You are a research specialist analyzing a codebase to understand specific aspects of the system.
 
 ## Context Items to Analyze
-${contextItems.map((item, index) => `
+${contextItems
+  .map(
+    (item, index) => `
 ### ${index + 1}. ${item.description}
 
 Please:
@@ -415,7 +419,9 @@ Focus on:
 - API contracts and interfaces
 - Testing strategies
 - Performance considerations
-`).join('\n')}
+`
+  )
+  .join('\n')}
 
 ## Output Requirements
 - Save all artifacts to the \`./artifacts\` directory
@@ -432,7 +438,7 @@ Once all context items have been analyzed and artifacts created, your work is do
 The orchestrator will automatically detect completion when you exit.
 `;
   }
-  
+
   private generatePhase2Instructions(workItemId: string, artifacts: string[]): string {
     return `# Phase 2: Implementation Planning
 
@@ -491,7 +497,7 @@ Save your implementation plan as \`./artifacts/implementation-plan.md\`
 Use the MCP tool \`report_progress\` to update your progress through the planning process.
 `;
   }
-  
+
   private generatePhase3Instructions(workItemId: string, plan: any): string {
     return `# Phase 3: Implementation
 
@@ -535,48 +541,48 @@ Use the MCP git operations tool for:
 Report progress after each major step of the implementation.
 `;
   }
-  
+
   private async createMCPConfig(workspace: string, phase: string): Promise<string> {
     const config = {
       servers: {
-        'filesystem': {
+        filesystem: {
           command: 'mcp-server-filesystem',
-          args: ['--workspace', workspace]
+          args: ['--workspace', workspace],
         },
-        'gitlab': {
+        gitlab: {
           command: 'mcp-server-gitlab',
-          args: ['--token', process.env.GITLAB_TOKEN]
+          args: ['--token', process.env.GITLAB_TOKEN],
         },
-        'orchestrator': {
+        orchestrator: {
           command: path.join(__dirname, '../../mcp-servers/orchestrator-mcp'),
-          args: ['--agent-workspace', workspace]
-        }
-      }
+          args: ['--agent-workspace', workspace],
+        },
+      },
     };
-    
+
     // Add phase-specific servers
     if (phase === 'phase3') {
       config.servers['git-operations'] = {
         command: 'mcp-server-git',
-        args: ['--repo-path', workspace]
+        args: ['--repo-path', workspace],
       };
     }
-    
+
     const configPath = path.join(workspace, 'mcp-config.json');
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
-    
+
     return configPath;
   }
-  
+
   private async archiveAgentWorkspace(agent: Agent) {
     const workItemDir = path.join(this.baseDir, 'work-items', agent.workItemId, agent.type);
     await fs.mkdir(workItemDir, { recursive: true });
-    
+
     // Copy artifacts
     const artifactsSource = path.join(agent.workspace, 'artifacts');
     const artifactsDest = path.join(workItemDir, 'artifacts');
     await this.copyDirectory(artifactsSource, artifactsDest);
-    
+
     // Create summary
     const summary = {
       agentId: agent.id,
@@ -585,27 +591,27 @@ Report progress after each major step of the implementation.
       endTime: new Date(),
       duration: Date.now() - agent.startTime.getTime(),
       workspace: agent.workspace,
-      artifacts: await fs.readdir(artifactsSource)
+      artifacts: await fs.readdir(artifactsSource),
     };
-    
-    await fs.writeFile(
-      path.join(workItemDir, 'summary.json'),
-      JSON.stringify(summary, null, 2)
-    );
-    
+
+    await fs.writeFile(path.join(workItemDir, 'summary.json'), JSON.stringify(summary, null, 2));
+
     // Optionally clean up agent workspace after a delay
-    setTimeout(async () => {
-      if (this.agents.get(agent.id)?.status !== 'busy') {
-        await fs.rm(agent.workspace, { recursive: true, force: true });
-        this.agents.delete(agent.id);
-      }
-    }, 5 * 60 * 1000); // 5 minutes
+    setTimeout(
+      async () => {
+        if (this.agents.get(agent.id)?.status !== 'busy') {
+          await fs.rm(agent.workspace, { recursive: true, force: true });
+          this.agents.delete(agent.id);
+        }
+      },
+      5 * 60 * 1000
+    ); // 5 minutes
   }
-  
+
   async getActiveAgents(): Promise<Agent[]> {
     return Array.from(this.agents.values()).filter(a => a.status === 'busy');
   }
-  
+
   async stopAgent(agentId: string): Promise<void> {
     const agent = this.agents.get(agentId);
     if (agent) {
@@ -659,7 +665,7 @@ export class WorkItemService {
   private github?: GitHubClient;
   private gitProvider: 'gitlab' | 'github';
   private baseDir = path.join(process.env.HOME!, '.agent-boss', 'work-items');
-  
+
   constructor(
     private db: Database,
     private agentManager: AgentManager,
@@ -677,19 +683,19 @@ export class WorkItemService {
     }
   ) {
     this.gitProvider = config.gitProvider;
-    
+
     if (config.gitProvider === 'gitlab' && config.gitlab) {
       this.gitlab = new GitLabClient(config.gitlab.url, config.gitlab.token);
     } else if (config.gitProvider === 'github' && config.github) {
       this.github = new GitHubClient(config.github.token, config.github.owner, config.github.repo);
     }
   }
-  
+
   async createFromIssue(issueId: string): Promise<WorkItem> {
     let issue: any;
     let sourceIssueUrl: string;
     let projectId: string;
-    
+
     // Fetch issue from appropriate provider
     if (this.gitProvider === 'gitlab' && this.gitlab) {
       issue = await this.gitlab.getIssue(issueId);
@@ -702,10 +708,10 @@ export class WorkItemService {
     } else {
       throw new Error('Git provider not configured');
     }
-    
+
     // Parse context items from issue description
     const contextItems = this.parseContextItems(issue.body || issue.description);
-    
+
     // Create work item
     const workItem: WorkItem = {
       id: this.generateId(),
@@ -719,28 +725,28 @@ export class WorkItemService {
       state: 'created',
       createdAt: new Date(),
       updatedAt: new Date(),
-      phases: {}
+      phases: {},
     };
-    
+
     // Save to database
     await this.db.saveWorkItem(workItem);
-    
+
     // Create file system structure
     await this.createWorkItemDirectories(workItem.id);
-    
+
     // Save metadata
     await this.saveWorkItemMetadata(workItem);
-    
+
     return workItem;
   }
-  
+
   private parseContextItems(description: string): ContextItem[] {
     const contextSection = description.match(/## Context Items\n([\s\S]*?)(?=\n##|$)/);
     if (!contextSection) return [];
-    
+
     const items: ContextItem[] = [];
     const lines = contextSection[1].split('\n');
-    
+
     for (const line of lines) {
       const match = line.match(/^\s*-\s+(.+)$/);
       if (match) {
@@ -748,14 +754,14 @@ export class WorkItemService {
           id: this.generateId(),
           description: match[1].trim(),
           type: this.inferContextType(match[1]),
-          status: 'pending'
+          status: 'pending',
         });
       }
     }
-    
+
     return items;
   }
-  
+
   private inferContextType(description: string): ContextItem['type'] {
     if (description.toLowerCase().includes('architecture')) {
       return 'architecture_review';
@@ -765,11 +771,11 @@ export class WorkItemService {
       return 'codebase_analysis';
     }
   }
-  
+
   async getArtifacts(workItemId: string): Promise<any[]> {
     const artifacts: any[] = [];
     const workItemDir = path.join(this.baseDir, workItemId);
-    
+
     // Check each phase for artifacts
     for (const phase of ['phase1', 'phase2', 'phase3']) {
       const artifactsDir = path.join(workItemDir, phase, 'artifacts');
@@ -781,17 +787,17 @@ export class WorkItemService {
             phase,
             filename: file,
             content,
-            path: path.join(phase, 'artifacts', file)
+            path: path.join(phase, 'artifacts', file),
           });
         }
       } catch (error) {
         // Phase might not exist yet
       }
     }
-    
+
     return artifacts;
   }
-  
+
   async requestRevision(workItemId: string, phase: string, feedback: any): Promise<any> {
     const revision = {
       id: this.generateId(),
@@ -799,30 +805,30 @@ export class WorkItemService {
       phase,
       feedback,
       requestedAt: new Date(),
-      status: 'pending'
+      status: 'pending',
     };
-    
+
     await this.db.saveRevision(revision);
-    
+
     // Update work item state
     await this.updateWorkItemState(workItemId, `${phase}_revision`);
-    
+
     return revision;
   }
-  
+
   private async createWorkItemDirectories(workItemId: string) {
     const dirs = [
       path.join(this.baseDir, workItemId),
       path.join(this.baseDir, workItemId, 'phase1'),
       path.join(this.baseDir, workItemId, 'phase2'),
-      path.join(this.baseDir, workItemId, 'phase3')
+      path.join(this.baseDir, workItemId, 'phase3'),
     ];
-    
+
     for (const dir of dirs) {
       await fs.mkdir(dir, { recursive: true });
     }
   }
-  
+
   private generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
@@ -833,13 +839,13 @@ export class WorkItemService {
 
 Support for both GitLab and GitHub APIs.
 
-```typescript
+````typescript
 // server/src/clients/GitLabClient.ts
 import axios from 'axios';
 
 export class GitLabClient {
   private api: any;
-  
+
   constructor(private baseUrl: string, private token: string) {
     this.api = axios.create({
       baseURL: `${baseUrl}/api/v4`,
@@ -848,23 +854,23 @@ export class GitLabClient {
       }
     });
   }
-  
+
   async getIssue(issueId: string): Promise<any> {
     // issueId format: "projectId/issueNumber" or just "issueNumber" if projectId is in config
     const response = await this.api.get(`/issues/${issueId}`);
     return response.data;
   }
-  
+
   async createMergeRequest(projectId: string, params: any): Promise<any> {
     const response = await this.api.post(`/projects/${projectId}/merge_requests`, params);
     return response.data;
   }
-  
+
   async updateIssue(issueId: string, updates: any): Promise<any> {
     const response = await this.api.put(`/issues/${issueId}`, updates);
     return response.data;
   }
-  
+
   async addComment(issueId: string, comment: string): Promise<any> {
     const response = await this.api.post(`/issues/${issueId}/notes`, { body: comment });
     return response.data;
@@ -876,13 +882,13 @@ import { Octokit } from '@octokit/rest';
 
 export class GitHubClient {
   private octokit: Octokit;
-  
+
   constructor(private token: string, private owner: string, private repo: string) {
     this.octokit = new Octokit({
       auth: token
     });
   }
-  
+
   async getIssue(issueNumber: string): Promise<any> {
     const response = await this.octokit.issues.get({
       owner: this.owner,
@@ -891,7 +897,7 @@ export class GitHubClient {
     });
     return response.data;
   }
-  
+
   async createPullRequest(params: any): Promise<any> {
     const response = await this.octokit.pulls.create({
       owner: this.owner,
@@ -900,7 +906,7 @@ export class GitHubClient {
     });
     return response.data;
   }
-  
+
   async updateIssue(issueNumber: string, updates: any): Promise<any> {
     const response = await this.octokit.issues.update({
       owner: this.owner,
@@ -910,7 +916,7 @@ export class GitHubClient {
     });
     return response.data;
   }
-  
+
   async addComment(issueNumber: string, comment: string): Promise<any> {
     const response = await this.octokit.issues.createComment({
       owner: this.owner,
@@ -932,52 +938,52 @@ import * as path from 'path';
 
 export class OrchestratorMCPServer extends MCPServer {
   private agentWorkspace: string;
-  
+
   constructor(args: string[]) {
     super();
     this.agentWorkspace = this.parseArgs(args)['--agent-workspace'];
     this.registerTools();
   }
-  
+
   private registerTools() {
     // Tool for saving artifacts
     this.registerTool('save_artifact', async (params) => {
       const { name, content, type } = params;
       const artifactPath = path.join(this.agentWorkspace, 'artifacts', name);
-      
+
       await fs.mkdir(path.dirname(artifactPath), { recursive: true });
       await fs.writeFile(artifactPath, content);
-      
+
       // Notify orchestrator via stdout
       console.log(`ARTIFACT_CREATED: ${artifactPath}`);
-      
-      return { 
+
+      return {
         success: true,
-        path: artifactPath 
+        path: artifactPath
       };
     });
-    
+
     // Tool for reporting progress
     this.registerTool('report_progress', async (params) => {
       const { phase, step, total, message } = params;
-      
+
       // Output progress in parseable format
-      console.log(`PROGRESS: ${JSON.stringify({ 
-        phase, 
-        step, 
-        total, 
+      console.log(`PROGRESS: ${JSON.stringify({
+        phase,
+        step,
+        total,
         message,
         percentage: Math.round((step / total) * 100)
       })}`);
-      
+
       return { success: true };
     });
-    
+
     // Tool for accessing work item data
     this.registerTool('get_work_item_data', async (params) => {
       const workItemId = process.env.AI_ORCHESTRATOR_WORK_ITEM;
       const { dataType } = params;
-      
+
       const dataPath = path.join(
         process.env.HOME!,
         '.agent-boss',
@@ -985,7 +991,7 @@ export class OrchestratorMCPServer extends MCPServer {
         workItemId!,
         `${dataType}.json`
       );
-      
+
       try {
         const data = await fs.readFile(dataPath, 'utf-8');
         return JSON.parse(data);
@@ -993,12 +999,12 @@ export class OrchestratorMCPServer extends MCPServer {
         return { error: `Failed to load ${dataType} data` };
       }
     });
-    
+
     // Tool for loading previous phase artifacts
     this.registerTool('load_phase_artifacts', async (params) => {
       const workItemId = process.env.AI_ORCHESTRATOR_WORK_ITEM;
       const { phase } = params;
-      
+
       const artifactsDir = path.join(
         process.env.HOME!,
         '.agent-boss',
@@ -1007,11 +1013,11 @@ export class OrchestratorMCPServer extends MCPServer {
         phase,
         'artifacts'
       );
-      
+
       try {
         const files = await fs.readdir(artifactsDir);
         const artifacts: any[] = [];
-        
+
         for (const file of files) {
           const content = await fs.readFile(path.join(artifactsDir, file), 'utf-8');
           artifacts.push({
@@ -1019,7 +1025,7 @@ export class OrchestratorMCPServer extends MCPServer {
             content
           });
         }
-        
+
         return { artifacts };
       } catch (error) {
         return { error: `Failed to load ${phase} artifacts` };
@@ -1033,7 +1039,7 @@ if (require.main === module) {
   const server = new OrchestratorMCPServer(process.argv.slice(2));
   server.start();
 }
-```
+````
 
 ## Frontend React Application
 
@@ -1058,7 +1064,7 @@ function App() {
             <a href="/agents">Agents</a>
           </div>
         </nav>
-        
+
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/work-items/:id" element={<WorkItemDetail />} />
@@ -1088,18 +1094,18 @@ export function WorkItemDetail() {
   const [progress, setProgress] = useState<Record<string, Progress>>({});
   const [artifacts, setArtifacts] = useState<any[]>([]);
   const [socket, setSocket] = useState<Socket | null>(null);
-  
+
   useEffect(() => {
     // Load work item
     fetchWorkItem();
-    
+
     // Connect to WebSocket
     const newSocket = io('http://localhost:3001');
     setSocket(newSocket);
-    
+
     // Subscribe to updates
     newSocket.emit('subscribe-work-item', id);
-    
+
     // Listen for progress updates
     newSocket.on('progress', (data) => {
       setProgress(prev => ({
@@ -1107,60 +1113,60 @@ export function WorkItemDetail() {
         [data.agentId]: data.progress
       }));
     });
-    
+
     // Listen for agent updates
     newSocket.on('agent-started', (data) => {
       if (data.workItemId === id) {
         setAgents(prev => [...prev, data]);
       }
     });
-    
+
     newSocket.on('agent-finished', (data) => {
-      setAgents(prev => prev.map(a => 
-        a.agentId === data.agentId 
+      setAgents(prev => prev.map(a =>
+        a.agentId === data.agentId
           ? { ...a, status: 'finished', duration: data.duration }
           : a
       ));
       // Reload artifacts
       fetchArtifacts();
     });
-    
+
     return () => {
       newSocket.close();
     };
   }, [id]);
-  
+
   const fetchWorkItem = async () => {
     const response = await fetch(`/api/work-items/${id}`);
     const data = await response.json();
     setWorkItem(data);
   };
-  
+
   const fetchArtifacts = async () => {
     const response = await fetch(`/api/work-items/${id}/artifacts`);
     const data = await response.json();
     setArtifacts(data);
   };
-  
+
   const startPhase = async (phase: string) => {
     try {
       const response = await fetch(
         `/api/work-items/${id}/start-phase/${phase}`,
         { method: 'POST' }
       );
-      
+
       if (!response.ok) {
         const error = await response.json();
         alert(error.message);
         return;
       }
-      
+
       const { agentId } = await response.json();
-      
+
       // Update UI to show agent started
-      setAgents(prev => [...prev, { 
-        id: agentId, 
-        phase, 
+      setAgents(prev => [...prev, {
+        id: agentId,
+        phase,
         status: 'running',
         startTime: new Date()
       }]);
@@ -1169,25 +1175,25 @@ export function WorkItemDetail() {
       alert('Failed to start phase');
     }
   };
-  
+
   const requestRevision = async (phase: string) => {
     const feedback = prompt('Enter revision feedback:');
     if (!feedback) return;
-    
+
     const response = await fetch(`/api/work-items/${id}/request-revision`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phase, feedback })
     });
-    
+
     const revision = await response.json();
     alert('Revision requested successfully');
   };
-  
+
   if (!workItem) {
     return <div>Loading...</div>;
   }
-  
+
   return (
     <div className="work-item-detail">
       <header>
@@ -1196,7 +1202,7 @@ export function WorkItemDetail() {
           GitLab Issue: #{workItem.gitlabIssueId}
         </div>
       </header>
-      
+
       <section className="context-items">
         <h2>Context Items</h2>
         <ul>
@@ -1209,13 +1215,13 @@ export function WorkItemDetail() {
           ))}
         </ul>
       </section>
-      
+
       <section className="phase-controls">
         <h2>Phases</h2>
         <div className="phase-buttons">
           <div className="phase">
             <h3>Phase 1: Research</h3>
-            <button 
+            <button
               onClick={() => startPhase('phase1')}
               disabled={agents.some(a => a.phase === 'phase1' && a.status === 'running')}
             >
@@ -1225,10 +1231,10 @@ export function WorkItemDetail() {
               Request Revision
             </button>
           </div>
-          
+
           <div className="phase">
             <h3>Phase 2: Planning</h3>
-            <button 
+            <button
               onClick={() => startPhase('phase2')}
               disabled={
                 !artifacts.some(a => a.phase === 'phase1') ||
@@ -1241,10 +1247,10 @@ export function WorkItemDetail() {
               Request Revision
             </button>
           </div>
-          
+
           <div className="phase">
             <h3>Phase 3: Implementation</h3>
-            <button 
+            <button
               onClick={() => startPhase('phase3')}
               disabled={
                 !artifacts.some(a => a.phase === 'phase2') ||
@@ -1259,7 +1265,7 @@ export function WorkItemDetail() {
           </div>
         </div>
       </section>
-      
+
       <section className="active-agents">
         <h2>Active Agents</h2>
         <div className="agents-grid">
@@ -1272,7 +1278,7 @@ export function WorkItemDetail() {
           ))}
         </div>
       </section>
-      
+
       <section className="artifacts">
         <h2>Artifacts</h2>
         <div className="artifacts-list">
@@ -1297,8 +1303,8 @@ function AgentCard({ agent, progress }: { agent: Agent; progress?: Progress }) {
       {progress && (
         <div className="progress">
           <div className="progress-bar">
-            <div 
-              className="progress-fill" 
+            <div
+              className="progress-fill"
               style={{ width: `${progress.percentage}%` }}
             />
           </div>
@@ -1311,7 +1317,7 @@ function AgentCard({ agent, progress }: { agent: Agent; progress?: Progress }) {
 
 function ArtifactCard({ artifact }: { artifact: any }) {
   const [showContent, setShowContent] = useState(false);
-  
+
   return (
     <div className="artifact-card">
       <div className="artifact-header" onClick={() => setShowContent(!showContent)}>
@@ -1391,7 +1397,7 @@ function ArtifactCard({ artifact }: { artifact: any }) {
 ### Starting a New Work Item
 
 1. **User Action**: Enters GitLab issue ID in UI
-2. **Backend**: 
+2. **Backend**:
    - Fetches issue from GitLab API
    - Parses context items from description
    - Creates work item in database
@@ -1430,7 +1436,7 @@ POST /api/work-items/issue-123/start-phase/phase1
 → Spawns process: claude [PID: 12345]
 → Workspace: ~/.agent-boss/agents/phase1-1712345678/
 
-// User B starts Phase 1 for issue-456  
+// User B starts Phase 1 for issue-456
 POST /api/work-items/issue-456/start-phase/phase1
 → Spawns process: claude [PID: 12346]
 → Workspace: ~/.agent-boss/agents/phase1-1712345789/
@@ -1451,49 +1457,49 @@ Create a configuration file for the orchestrator:
 module.exports = {
   // Git provider configuration
   gitProvider: process.env.GIT_PROVIDER || 'github', // 'github' or 'gitlab'
-  
+
   // GitHub configuration
   github: {
     token: process.env.GITHUB_TOKEN,
     owner: process.env.GITHUB_OWNER,
     repo: process.env.GITHUB_REPO,
     // Optional: GitHub Enterprise URL
-    baseUrl: process.env.GITHUB_API_URL || 'https://api.github.com'
+    baseUrl: process.env.GITHUB_API_URL || 'https://api.github.com',
   },
-  
+
   // GitLab configuration
   gitlab: {
     url: process.env.GITLAB_URL || 'https://gitlab.com',
     token: process.env.GITLAB_TOKEN,
     // Optional: Default project ID for issues
-    defaultProjectId: process.env.GITLAB_PROJECT_ID
+    defaultProjectId: process.env.GITLAB_PROJECT_ID,
   },
-  
+
   // Agent configuration
   agents: {
     maxConcurrent: parseInt(process.env.MAX_AGENTS) || 5,
     timeout: parseInt(process.env.AGENT_TIMEOUT) || 3600000, // 1 hour
-    archiveDelay: parseInt(process.env.ARCHIVE_DELAY) || 300000 // 5 minutes
+    archiveDelay: parseInt(process.env.ARCHIVE_DELAY) || 300000, // 5 minutes
   },
-  
+
   // Server configuration
   server: {
     port: parseInt(process.env.PORT) || 3001,
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:3000'
-    }
+      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    },
   },
-  
+
   // Database configuration
   database: {
-    path: process.env.DB_PATH || '~/.agent-boss/database/orchestrator.db'
+    path: process.env.DB_PATH || '~/.agent-boss/database/orchestrator.db',
   },
-  
+
   // Logging configuration
   logging: {
     level: process.env.LOG_LEVEL || 'info',
-    directory: process.env.LOG_DIR || '~/.agent-boss/logs'
-  }
+    directory: process.env.LOG_DIR || '~/.agent-boss/logs',
+  },
 };
 ```
 
@@ -1578,11 +1584,11 @@ function validateConfig(config: OrchestratorConfig) {
   if (config.gitProvider === 'github' && !config.github?.token) {
     throw new Error('GitHub token is required when using GitHub provider');
   }
-  
+
   if (config.gitProvider === 'gitlab' && !config.gitlab?.token) {
     throw new Error('GitLab token is required when using GitLab provider');
   }
-  
+
   console.log(`Starting AI Orchestrator with ${config.gitProvider} integration`);
 }
 
@@ -1590,19 +1596,19 @@ function validateConfig(config: OrchestratorConfig) {
 async function start() {
   try {
     validateConfig(config);
-    
+
     const server = new OrchestratorServer(config);
     await server.start(config.server.port);
-    
+
     console.log(`
       🚀 Agent Boss Started
-      
+
       Git Provider: ${config.gitProvider}
       API URL: http://localhost:${config.server.port}
       Frontend URL: ${config.server.cors.origin}
       Max Agents: ${config.agents.maxConcurrent}
-      
-      ${config.gitProvider === 'github' 
+
+      ${config.gitProvider === 'github'
         ? `GitHub: ${config.github.owner}/${config.github.repo}`
         : `GitLab: ${config.gitlab.url}`
       }
@@ -1627,6 +1633,7 @@ start();
 ## Monitoring and Debugging
 
 ### Viewing Agent Logs
+
 ```bash
 # Real-time log monitoring
 tail -f ~/.agent-boss/logs/phase1-1712345678.log
@@ -1639,7 +1646,9 @@ ls -la ~/.agent-boss/agents/
 ```
 
 ### Debug Mode
+
 Set environment variable for verbose logging:
+
 ```bash
 AGENT_BOSS_DEBUG=true npm start
 ```

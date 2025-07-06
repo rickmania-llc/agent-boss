@@ -1,14 +1,17 @@
 # Agent Boss Development Plan
 
 ## Project Overview
+
 Agent Boss is a system for orchestrating multiple Claude Code instances as local processes to handle phased development workflows. It provides a web-based management interface and integrates with GitHub/GitLab for work item management.
 
 ## Milestones
 
 ### Milestone 1: Core Infrastructure and Backend Foundation
+
 **Goal:** Establish the foundational backend architecture with process management capabilities
 
 #### Issues:
+
 1. **Project Setup and Configuration**
    - Initialize Node.js/TypeScript project structure
    - Set up build tools (webpack, tsc, nodemon)
@@ -36,9 +39,11 @@ Agent Boss is a system for orchestrating multiple Claude Code instances as local
    - Create file copying utilities
 
 ### Milestone 2: Git Integration and Work Item Management
+
 **Goal:** Enable work item creation from GitHub/GitLab issues
 
 #### Issues:
+
 1. **GitHub Client Implementation**
    - Create GitHub API client using Octokit
    - Implement issue fetching and parsing
@@ -64,9 +69,11 @@ Agent Boss is a system for orchestrating multiple Claude Code instances as local
    - Add configuration validation
 
 ### Milestone 3: Agent Communication and MCP Integration
+
 **Goal:** Enable agents to communicate with the orchestrator and report progress
 
 #### Issues:
+
 1. **MCP Server Development**
    - Create custom MCP server for orchestrator communication
    - Implement artifact saving tool
@@ -92,9 +99,11 @@ Agent Boss is a system for orchestrating multiple Claude Code instances as local
    - Implement artifact versioning
 
 ### Milestone 4: REST API and WebSocket Implementation
+
 **Goal:** Create the API layer for frontend communication
 
 #### Issues:
+
 1. **Express Server Setup**
    - Create Express application structure
    - Add middleware (CORS, body parser, error handling)
@@ -120,9 +129,11 @@ Agent Boss is a system for orchestrating multiple Claude Code instances as local
    - Create progress event streaming
 
 ### Milestone 5: Frontend Development
+
 **Goal:** Build the React-based web interface
 
 #### Issues:
+
 1. **React Application Setup**
    - Initialize React app with TypeScript
    - Set up routing with React Router
@@ -154,9 +165,11 @@ Agent Boss is a system for orchestrating multiple Claude Code instances as local
    - Create status change animations
 
 ### Milestone 6: Phase-Specific Features
+
 **Goal:** Implement specialized functionality for each development phase
 
 #### Issues:
+
 1. **Phase 1 Research Tools**
    - Create context item status tracking
    - Add research artifact templates
@@ -182,9 +195,11 @@ Agent Boss is a system for orchestrating multiple Claude Code instances as local
    - Create re-run with modifications feature
 
 ### Milestone 7: Testing and Quality Assurance
+
 **Goal:** Ensure system reliability and maintainability
 
 #### Issues:
+
 1. **Backend Testing**
    - Set up Jest testing framework
    - Write unit tests for AgentManager
@@ -210,9 +225,11 @@ Agent Boss is a system for orchestrating multiple Claude Code instances as local
    - Write developer documentation
 
 ### Milestone 8: Production Readiness
+
 **Goal:** Prepare the system for production deployment
 
 #### Issues:
+
 1. **Error Handling and Recovery**
    - Implement comprehensive error handling
    - Add automatic retry mechanisms
@@ -238,9 +255,11 @@ Agent Boss is a system for orchestrating multiple Claude Code instances as local
    - Create monitoring dashboards
 
 ### Milestone 9: Advanced Features
+
 **Goal:** Add enhanced capabilities and integrations
 
 #### Issues:
+
 1. **Agent Templates**
    - Create template system for common tasks
    - Add custom instruction support
@@ -266,6 +285,7 @@ Agent Boss is a system for orchestrating multiple Claude Code instances as local
    - Add success rate metrics
 
 ## Implementation Order
+
 1. Start with Milestone 1 to establish core infrastructure
 2. Implement Milestone 2 and 3 in parallel for basic functionality
 3. Complete Milestone 4 before starting frontend (Milestone 5)
@@ -275,6 +295,7 @@ Agent Boss is a system for orchestrating multiple Claude Code instances as local
 7. Add Milestone 9 features based on user feedback
 
 ## Technology Stack
+
 - **Backend:** Node.js, TypeScript, Express, Socket.io
 - **Database:** SQLite with TypeORM/Knex
 - **Frontend:** React, TypeScript, Socket.io-client

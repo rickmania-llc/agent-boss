@@ -1,12 +1,15 @@
 # [FEATURE/BUG/ENHANCEMENT NAME] Issue
 
 ## Overview
+
 [Provide a clear, concise description of what needs to be implemented/fixed. Describe the problem, the solution, and the impact on the system.]
 
 ## Current State
+
 [Describe the current implementation and what specifically is wrong or missing]
 
 **Current Code Location**: `[path-from-project-root]` lines [start-end]
+
 ```[language]
 [Current code snippet that needs modification]
 // <-- [Comment indicating what's wrong or what needs to be changed]
@@ -15,22 +18,27 @@
 ## Requirements
 
 ### Primary Requirement
+
 - [Main objective that unblocks the feature or fixes the issue]
 
 ### [System/Feature] Requirements
+
 The [system/feature] should support:
+
 1. **[Requirement 1]** - [Clear description]
 2. **[Requirement 2]** - [Clear description]
 3. **[Requirement 3]** - [Clear description]
 4. **[Requirement 4]** - [Clear description]
 
 ### [Specific Component] Requirements
+
 - **[Aspect 1]**: [Specific requirement with details]
 - **[Aspect 2]**: [Specific requirement with details]
 - **[Aspect 3]**: [Specific requirement with details]
 - **[Aspect 4]**: [Specific requirement with details]
 
 ### [Data/API/Integration] Requirements
+
 - **[Flow 1]**: [Step 1] → [Step 2] → [Step 3]
 - **[Flow 2]**: [Description of data/event flow]
 - **[Flow 3]**: [Description of integration pattern]
@@ -39,7 +47,9 @@ The [system/feature] should support:
 ## Technical Implementation Plan
 
 ### Phase 1: [Phase Name]
+
 [Describe what this phase accomplishes]:
+
 - **File**: `[path-from-project-root]`
 - **Lines [start-end]**: [Describe the change needed]
   ```[language]
@@ -49,7 +59,9 @@ The [system/feature] should support:
 - [Maintain existing functionality notes]
 
 ### Phase 2: [Phase Name]
+
 [Describe what this phase accomplishes]:
+
 - **File**: `[path-from-project-root]`
 - **Line [number]**: [Describe modification needed]
   ```[language]
@@ -66,7 +78,9 @@ The [system/feature] should support:
   ```
 
 ### Phase 3: [Phase Name]
+
 [Describe what this phase accomplishes]:
+
 - **File**: `[path-from-project-root]`
 - **After line [number]**: Add new method `[methodName]()`:
   ```[language]
@@ -74,10 +88,12 @@ The [system/feature] should support:
   ```
 
 ### Phase 4: [Phase Name] (FUTURE/OPTIONAL)
+
 [Describe future enhancements not part of current implementation]:
+
 - **Future Location**: [Where this would go]
 - **Future Method**: `[methodName](params)`
-- **Future Integration Points**: 
+- **Future Integration Points**:
   - [Integration description]
   - [Event flow description]
   - [Dependency requirements]
@@ -86,26 +102,31 @@ The [system/feature] should support:
 ## File References
 
 ### Core [System/Feature] Files
+
 - `[path-from-project-root]` - [Description of file's role]
 - `[path-from-project-root]` - [Description of file's role]
 - `[path-from-project-root]` - [Description of file's role]
 
 ### Documentation References
+
 - `[path-from-project-root]` - [Description of documentation]
 - `[path-from-project-root]` - [Description of documentation]
 
 ### Existing [Related] Files (Patterns to Follow)
+
 - `[path-from-project-root]` - [Description and pattern to follow]
 - `[path-from-project-root]` - [Description and pattern to follow]
 - `[path-from-project-root]` - [Description and pattern to follow]
 
 ### [Environment/Configuration]
+
 - **[Config 1]**: [Configuration details - environment variables, ports, etc.]
 - **[Config 2]**: [Configuration requirements]
 
 ## Implementation TODOs
 
 ### [Component/Feature] Development TODOs
+
 - [ ] **[Task description]** (`[path-from-root/filename]` lines [X-Y]):
   - [Specific change needed]
   - [Expected behavior]
@@ -113,12 +134,13 @@ The [system/feature] should support:
 - [ ] **[Task description]** (line [X]): [Implementation detail]
 - [ ] **[Task description]** (lines [X-Y]):
   - [Action 1]
-  - [Action 2]  
+  - [Action 2]
   - [Action 3]
   - [Action 4]
 - [ ] **[Task description]** (`[path-from-root/Component/File]`): [Details]
 
 ### [System/Service] Handler TODOs
+
 - [ ] **[Task description]** (`[path-from-root/filename.ts]` line [X]):
   - [Implementation detail]
   - [Specific behavior]
@@ -138,13 +160,16 @@ The [system/feature] should support:
   - [Update requirements]
 
 ### [Integration/Broadcasting] TODOs (FUTURE)
+
 These are for future implementation when [condition]:
+
 - [ ] FUTURE: [Task description] after line [X]
 - [ ] FUTURE: [Pattern description] pattern
 - [ ] FUTURE: [Integration description]
 - [ ] FUTURE: [Event mapping] (`[path-from-root/file]` lines [X-Y])
 
 ### Testing and Validation TODOs
+
 - [ ] **[Test scenario]**:
   - [Test case 1]
   - [Test case 2]
@@ -160,6 +185,7 @@ These are for future implementation when [condition]:
   - [Behavior 2]
 
 ### **MANDATORY: Documentation Update TODOs**
+
 - [ ] **Update [service-dir]/CLAUDE.md** (lines [X-Y]):
   - [What to add/update]
   - [Architecture changes]
@@ -181,24 +207,28 @@ These are for future implementation when [condition]:
 ## Acceptance Criteria
 
 ### Functional Acceptance
+
 1. **[Criteria 1]**: [Specific measurable outcome]
 2. **[Criteria 2]**: [Specific measurable outcome]
 3. **[Criteria 3]**: [Specific measurable outcome]
 4. **[Criteria 4]**: [Specific measurable outcome]
 5. **[Criteria 5]**: [Specific measurable outcome]
 
-### Performance Acceptance  
+### Performance Acceptance
+
 1. **[Performance Metric 1]**: [Specific performance requirement with measurable target]
 2. **[Performance Metric 2]**: [Specific performance requirement with measurable target]
 3. **[Performance Metric 3]**: [Specific performance requirement with measurable target]
 
 ### Quality Acceptance
+
 1. **[Quality Aspect 1]**: [Specific quality requirement]
 2. **[Quality Aspect 2]**: [Specific quality requirement]
 3. **[Quality Aspect 3]**: [Specific quality requirement]
 4. **[Quality Aspect 4]**: [Specific quality requirement]
 
 ### **MANDATORY: Documentation Acceptance**
+
 1. **CLAUDE.md Updates Complete**: All relevant directory-level `CLAUDE.md` files have been updated with new functions, files, and architectural changes
 2. **Documentation Accuracy**: Updated documentation accurately reflects implemented functionality and follows established format
 3. **Completeness Check**: No new functions or files are missing from appropriate `CLAUDE.md` files
@@ -207,21 +237,27 @@ These are for future implementation when [condition]:
 ## Development Notes
 
 ### [Authentication/Data/Integration] Pattern to Follow
+
 For this implementation with [specifics]:
+
 - [Pattern detail 1]
-- [Pattern detail 2]  
+- [Pattern detail 2]
 - [Pattern detail 3]
 - [Pattern detail 4]
 
 ### [Data Format/API/Event] Pattern
+
 Follow [reference] format from `[path-from-root/file/spec]`:
+
 - [Data structure 1]: [Format details]
 - [Data structure 2]: [Format details]
 - [Data structure 3]: [Format details]
 - [Data structure 4]: [Format details]
 
 ### [Broadcasting/Communication] Pattern
+
 Follow [reference] pattern from `[path-from-root/file/spec]`:
+
 - [Pattern aspect 1]
 - [Pattern aspect 2]
 - [Pattern aspect 3]
@@ -231,22 +267,26 @@ Follow [reference] pattern from `[path-from-root/file/spec]`:
 **This section MUST be completed as part of issue implementation:**
 
 ### Directories Requiring CLAUDE.md Updates
+
 - `[path-from-root/directory]` - [Reason for update: new file, new functions, architectural change]
 - `[path-from-root/directory]` - [Reason for update: new file, new functions, architectural change]
 - `[path-from-root/directory]` - [Reason for update: new file, new functions, architectural change]
 
 ### New Functions to Document
+
 - `[functionName]()` in `[path-from-root/file.ts]` - [Purpose and parameters]
 - `[functionName]()` in `[path-from-root/file.ts]` - [Purpose and parameters]
 - `[functionName]()` in `[path-from-root/file.ts]` - [Purpose and parameters]
 
 ### New Event Flows to Document
+
 - [Event flow 1 description]
 - `[event1]`/`[event2]` event pair
 - [Event flow 3 description]
 - [Event flow 4 description]
 
 ### Architectural Changes to Document
+
 - [Architecture change 1]
 - [Architecture change 2]
 - [Architecture change 3]

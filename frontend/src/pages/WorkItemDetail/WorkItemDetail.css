@@ -1,0 +1,77 @@
+.work-item-detail {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.work-item-detail-header {
+  margin-bottom: 2rem;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+}
+
+.back-button:hover {
+  text-decoration: underline;
+}
+
+.work-item-detail-loading,
+.work-item-detail-error {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+.work-item-detail-content {
+  background: var(--bg-primary);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.work-item-detail-meta {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0 2rem 0;
+}
+
+.work-item-detail-section {
+  margin-top: 2rem;
+}
+
+.work-item-detail-section h3 {
+  margin-bottom: 1rem;
+}
+
+.agent-assignment {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.agent-assignment select {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.agent-assignment button {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.agent-assignment button:hover {
+  background-color: var(--primary-dark);
+}

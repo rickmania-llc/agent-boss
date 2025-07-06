@@ -1,0 +1,16 @@
+.agent-list h3 {
+  margin-bottom: 1rem;
+}
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.agent-list-loading,
+.agent-list-empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}

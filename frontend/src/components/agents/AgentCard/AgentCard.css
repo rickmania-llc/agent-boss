@@ -1,0 +1,77 @@
+.agent-card {
+  background: var(--bg-primary);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.agent-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.agent-card-header h4 {
+  margin: 0;
+}
+
+.agent-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.agent-status-idle {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.agent-status-busy {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.agent-status-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.agent-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.agent-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.agent-info .label {
+  color: var(--text-secondary);
+}
+
+.agent-card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.stop-button {
+  padding: 0.5rem 1rem;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.stop-button:hover {
+  background-color: #dc2626;
+}
