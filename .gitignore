@@ -1,4 +1,17 @@
-dist
-node_modules
+node_modules/
+dist/
 .env
-.idea
+.env.local
+logs/
+*.log
+.DS_Store
+coverage/
+.vscode/
+.idea/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Generated files
+frontend/vite.config.js
+frontend/vite.config.d.ts
