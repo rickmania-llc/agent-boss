@@ -1,5 +1,5 @@
 ---
-name: project-manager
+name: implmentation-planner
 description: Use this agent to create comprehensive implementation plans and epics from research documents and detailed requirements. This agent excels at translating technical analysis into actionable development plans with clear user stories, acceptance criteria, and technical specifications. <example>\nContext: The user has completed research and needs an implementation plan.\nuser: "Create an implementation plan for the authentication system based on the research in ./ai-docs/research/auth-analysis.md"\nassistant: "I'll use the project-manager agent to create a detailed implementation plan based on the research."\n<commentary>\nThe user needs to convert research into an actionable development plan, so use the project-manager agent.\n</commentary>\n</example>\n<example>\nContext: The user needs to plan a complex feature rollout.\nuser: "Develop an epic for migrating from RabbitMQ to Redis based on our comparison research"\nassistant: "Let me launch the project-manager agent to create a comprehensive migration epic."\n<commentary>\nThe user is requesting a structured implementation plan based on research, perfect for the project-manager agent.\n</commentary>\n</example>
 model: inherit
 color: red
