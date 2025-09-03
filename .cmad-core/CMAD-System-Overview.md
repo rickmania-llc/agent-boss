@@ -1,5 +1,5 @@
 # CMAD System Overview
-**Claude-Made Agent Development Framework**
+**Claude-Made Agent Development Framework V1**
 
 ## Introduction
 
@@ -524,6 +524,87 @@ ai-docs/
 - Automated testing frameworks
 - Code quality metrics tracking
 - Performance monitoring integration
+
+---
+
+## Claude Code Integration
+
+### Setting Up CMAD Agents in Claude Code
+
+To use the CMAD agents with Claude Code, you need to copy the agent definitions to the Claude Code agents directory:
+
+#### Installation Steps
+
+1. **Create Claude agents directory** (if it doesn't exist):
+```bash
+mkdir -p .claude/agents/
+```
+
+2. **Copy CMAD agents to Claude Code**:
+```bash
+# Copy all agent definitions
+cp .cmad-core/agents/*.md .claude/agents/
+
+# Or copy individual agents
+cp .cmad-core/agents/code-research-analyst.md .claude/agents/
+cp .cmad-core/agents/implementation-planner.md .claude/agents/
+cp .cmad-core/agents/user-story-creator.md .claude/agents/
+cp .cmad-core/agents/developer.md .claude/agents/
+```
+
+3. **Verify agents are available**:
+The agents should now be available in Claude Code via the Task tool.
+
+#### Using CMAD Agents in Claude Code
+
+Once installed, you can invoke the agents using natural language:
+
+**Research Phase:**
+```
+"Use the code-research-analyst agent to analyze the authentication system"
+```
+
+**Planning Phase:**
+```
+"Use the implementation-planner agent to create an epic based on ./ai-docs/research/auth-analysis.md"
+```
+
+**Story Creation:**
+```
+"Use the user-story-creator agent to create story 2 from ./ai-docs/epics/auth-implementation.md"
+```
+
+**Development:**
+```
+"Use the developer agent to implement ./ai-docs/stories/auth-story-2-registration.md"
+```
+
+#### Agent Colors in Claude Code
+- **Code Research Analyst**: Pink
+- **Implementation Planner**: Red  
+- **User Story Creator**: Orange
+- **Developer**: Green
+
+#### Directory Structure After Setup
+```
+your-project/
+├── .claude/
+│   └── agents/
+│       ├── code-research-analyst.md
+│       ├── implementation-planner.md
+│       ├── user-story-creator.md
+│       └── developer.md
+├── .cmad-core/
+│   ├── agents/
+│   │   └── [source agent files]
+│   ├── templates/
+│   │   └── [template files]
+│   └── CMAD-System-Overview.md
+└── ai-docs/
+    ├── research/
+    ├── epics/
+    └── stories/
+```
 
 ---
 
