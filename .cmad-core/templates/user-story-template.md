@@ -29,10 +29,6 @@ So that [business value]
 
 ### Environment Setup Required
 ```bash
-# Environment variables needed
-JWT_SECRET=your_secret_here
-DATABASE_URL=postgresql://...
-REDIS_URL=redis://...
 
 # Services that must be running
 - PostgreSQL 14+

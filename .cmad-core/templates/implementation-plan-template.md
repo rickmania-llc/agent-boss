@@ -278,17 +278,6 @@ Response: { message: "Verification email sent" }
 | /auth/verify/:token | GET | No | Verify email |
 | /auth/sessions | GET | Yes | List sessions |
 
-### Environment Variables
-```bash
-JWT_SECRET=           # Secret for signing JWTs
-JWT_EXPIRY=24h        # Token expiration time
-BCRYPT_ROUNDS=10      # Password hashing rounds
-SMTP_HOST=            # Email server
-SMTP_PORT=587
-SMTP_USER=
-SMTP_PASS=
-REDIS_URL=            # Session store
-```
 
 ### Test Coverage Requirements
 | Story | Unit Tests | Integration Tests |
