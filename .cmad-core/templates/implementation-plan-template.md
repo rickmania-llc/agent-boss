@@ -46,24 +46,24 @@
 - [ ] ORM models created with relationships defined
 - [ ] Database migrations are reversible
 
-**Technical Details:**
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  email_verified BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
+**Technical Implementation:**
+- **Migration File:** `migrations/001_create_auth_tables.sql`
+- **Schema Design:**
+  ```
+  users table:
+    - id: UUID primary key
+    - email: unique, indexed
+    - password_hash: bcrypt result
+    - email_verified: boolean flag
+    - timestamps: created_at, updated_at
 
-CREATE TABLE sessions (
-  token VARCHAR(255) PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  expires_at TIMESTAMP NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
+  sessions table:
+    - token: primary key
+    - user_id: foreign key to users
+    - expires_at: TTL timestamp
+    - created_at: timestamp
+  ```
+- **ORM Models:** Define in `models/User.js` and `models/Session.js` with relationships
 
 **Files to Create/Modify:**
 - Create: `migrations/001_create_auth_tables.sql`
@@ -84,18 +84,20 @@ CREATE TABLE sessions (
 - [ ] Successful registration returns user ID and sends verification email
 - [ ] Input validation for email format and password strength
 
-**Technical Details:**
-```javascript
-POST /auth/register
-Request: {
-  email: string,     // valid email format
-  password: string   // min 8 chars, 1 uppercase, 1 number
-}
-Response: {
-  userId: string,
-  message: "Verification email sent"
-}
-```
+**Technical Implementation:**
+- **Entry Point:** `routes/auth.js` line ~25 (after login route)
+- **Main Logic:** `controllers/AuthController.js::register()` method
+- **Pseudocode:**
+  ```
+  1. Validate email format and password strength
+  2. Check if email already exists in database
+  3. Hash password with bcrypt (10 rounds)
+  4. Create user record in database
+  5. Generate verification token
+  6. Queue email with verification link
+  7. Return success with userId
+  ```
+- **API Contract:** POST /auth/register → {email, password} → {userId, message}
 
 **Files to Create/Modify:**
 - Create: `routes/auth.js` - Route definitions
@@ -117,19 +119,19 @@ Response: {
 - [ ] Failed login returns 401 without revealing if email exists
 - [ ] Implements rate limiting (5 attempts per minute)
 
-**Technical Details:**
-```javascript
-POST /auth/login
-Request: {
-  email: string,
-  password: string
-}
-Response: {
-  token: string,      // JWT token
-  expiresIn: number,  // seconds until expiration
-  userId: string
-}
-```
+**Technical Implementation:**
+- **Entry Point:** `routes/auth.js` line ~10 (first route)
+- **Main Logic:** `controllers/AuthController.js::login()` method
+- **Pseudocode:**
+  ```
+  1. Find user by email
+  2. Compare password hash with bcrypt
+  3. Generate JWT with userId and email
+  4. Set token expiry to 24 hours
+  5. Store session in database
+  6. Return token and metadata
+  ```
+- **API Contract:** POST /auth/login → {email, password} → {token, expiresIn, userId}
 
 **Files to Create/Modify:**
 - Modify: `controllers/AuthController.js` - Add login method
@@ -150,19 +152,19 @@ Response: {
 - [ ] Returns 401 for invalid/expired tokens
 - [ ] Excludes public endpoints from verification
 
-**Technical Details:**
-```javascript
-// Usage in routes
-router.get('/protected', authenticateToken, (req, res) => {
-  // req.user is available here
-});
-
-// Middleware signature
-function authenticateToken(req, res, next) {
-  const token = req.headers['authorization']?.split(' ')[1];
-  // Verify token and attach user to req
-}
-```
+**Technical Implementation:**
+- **Entry Point:** `middleware/auth.js::authenticateToken()`
+- **Integration:** Applied in `routes/index.js` line ~5
+- **Pseudocode:**
+  ```
+  1. Extract Bearer token from Authorization header
+  2. Verify JWT signature with secret
+  3. Check token expiration
+  4. Load user from database using token's userId
+  5. Attach user object to req.user
+  6. Call next() or return 401
+  ```
+- **Usage Pattern:** `router.get('/protected', authenticateToken, handler)`
 
 **Files to Create/Modify:**
 - Create: `middleware/auth.js` - Token verification
@@ -182,19 +184,26 @@ function authenticateToken(req, res, next) {
 - [ ] Old sessions invalidated after password reset
 - [ ] Used tokens cannot be reused
 
-**Technical Details:**
-```javascript
-POST /auth/forgot-password
-Request: { email: string }
-Response: { message: "Reset email sent if account exists" }
-
-POST /auth/reset-password
-Request: { 
-  token: string,
-  newPassword: string 
-}
-Response: { message: "Password updated successfully" }
-```
+**Technical Implementation:**
+- **Entry Points:**
+  - `controllers/AuthController.js::forgotPassword()` line ~150
+  - `controllers/AuthController.js::resetPassword()` line ~180
+- **Pseudocode (Forgot):**
+  ```
+  1. Look up user by email (don't reveal if exists)
+  2. Generate secure reset token
+  3. Store token with 1-hour expiry
+  4. Send email with reset link
+  5. Return generic success message
+  ```
+- **Pseudocode (Reset):**
+  ```
+  1. Validate reset token and check expiry
+  2. Hash new password
+  3. Update user's password
+  4. Invalidate all existing sessions
+  5. Mark token as used
+  ```
 
 **Files to Create/Modify:**
 - Modify: `controllers/AuthController.js` - Reset methods
@@ -214,20 +223,25 @@ Response: { message: "Password updated successfully" }
 - [ ] DELETE /auth/sessions/:id revokes specific session
 - [ ] Sessions expire after 24 hours of inactivity
 
-**Technical Details:**
-```javascript
-POST /auth/logout
-Headers: { Authorization: "Bearer {token}" }
-Response: { message: "Logged out successfully" }
-
-GET /auth/sessions
-Response: [{
-  id: string,
-  createdAt: datetime,
-  lastActive: datetime,
-  userAgent: string
-}]
-```
+**Technical Implementation:**
+- **Entry Points:**
+  - `controllers/AuthController.js::logout()` line ~100
+  - `controllers/AuthController.js::getSessions()` line ~120
+- **Pseudocode (Logout):**
+  ```
+  1. Get token from Authorization header
+  2. Find session by token
+  3. Mark session as expired
+  4. Clear any cache entries
+  5. Return success
+  ```
+- **Pseudocode (Sessions):**
+  ```
+  1. Get userId from authenticated request
+  2. Query all active sessions for user
+  3. Parse user agent strings
+  4. Return formatted session list
+  ```
 
 **Files to Create/Modify:**
 - Modify: `controllers/AuthController.js` - Session methods
@@ -248,15 +262,26 @@ Response: [{
 - [ ] Cannot login without verification (configurable)
 - [ ] Can resend verification email
 
-**Technical Details:**
-```javascript
-GET /auth/verify/:token
-Response: { message: "Email verified successfully" }
-
-POST /auth/resend-verification
-Request: { email: string }
-Response: { message: "Verification email sent" }
-```
+**Technical Implementation:**
+- **Entry Points:**
+  - `controllers/AuthController.js::verifyEmail()` line ~220
+  - `controllers/AuthController.js::resendVerification()` line ~240
+- **Pseudocode (Verify):**
+  ```
+  1. Lookup verification token
+  2. Check if expired (24 hours)
+  3. Update user.email_verified = true
+  4. Delete used token
+  5. Return success or redirect
+  ```
+- **Pseudocode (Resend):**
+  ```
+  1. Find user by email
+  2. Check if already verified
+  3. Invalidate old tokens
+  4. Generate new verification token
+  5. Send verification email
+  ```
 
 **Files to Create/Modify:**
 - Modify: `controllers/AuthController.js` - Verification methods

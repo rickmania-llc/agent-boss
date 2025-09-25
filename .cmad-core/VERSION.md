@@ -1,3 +1,9 @@
 # CMAD AI Development System
 
-## Version 1.0.1
+## 1.0.2
+
+- Updated the implementation planner
+
+## 1.01
+
+- Initial release
