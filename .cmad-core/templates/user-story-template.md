@@ -1,492 +1,214 @@
-# User Story Development Specification
+---
+name: user-story-template
+description: Template for creating detailed, implementation-ready user stories with full technical context, code examples, database schemas, API references, and testing guidance. Used by the user-story-creator agent to expand Story Seeds from architecture plans into comprehensive developer blueprints.
+model: inherit
+color: blue
+---
 
-## Story Identifier
-**Story ID:** [EPIC-XXX-YY]  
-**Story Name:** [Exact name from implementation plan]  
-**Epic:** [Parent epic name]  
-**Priority:** [P0/P1/P2]  
-**Weight:** <LEAVE BLANK>
+# User Story Template (Detailed Developer Blueprint)
+
+---
+title: <short descriptive title>
+source_plan: <architecture plan filename or none>
+priority: <P1 | P2 | P3>
+status: draft
+plan_type: <lite | standard | deep>
+assigned_to: <engineer or TBD>
+estimated_hours: <optional>
+---
+
+## 1. Story Summary
+> As a [user/system/admin], I need [feature or change], so that [benefit/outcome].
+
+Briefly restate what's being built and why it matters.
+If this story came from a plan, summarize the connection:
+
+> Based on `<architecture-plan-filename>`, this story implements the [specific component or feature] defined in section [x].
 
 ---
 
-## Story Objective
-**User Story:**  
-As a [user type]  
-I need [functionality]  
-So that [business value]
+## 2. Background / Context
+Summarize relevant architectural or design rationale.
+Reference ADRs, architecture plans, or diagrams that informed this story.
 
-**Technical Objective:**  
-*[1-2 sentences describing what code/functionality this story delivers]*
-
----
-
-## Prerequisites
-
-### Dependencies Completed
-- [ ] [Story ID] - [What it provides that this story needs]
-- [ ] Database migrations from Story XXX applied
-- [ ] API endpoints from Story YYY available
-
-### Environment Setup Required
-```bash
-
-# Services that must be running
-- PostgreSQL 14+
-- Redis 6+
-- [Other services]
-```
-
-### Required Access
-- [ ] Database write access to tables: [list tables]
-- [ ] Read access to services: [list services]
-- [ ] File system write access to: [list directories]
+Example:
+> Following ADR-002 (Scanner Library Decision), this implementation uses `react-native-camera-kit` for consistent performance across iOS and Android.
+> This work aligns with the "Mobile Configuration Workflow" in the `2025-10-07-qr-scanner-architecture-plan.md` document.
 
 ---
 
-## Implementation Specifications
+## 3. Acceptance Criteria
+All acceptance criteria must be clear, measurable, and testable.
 
-### Files to Create
+- [ ] Feature behaves as described in the user scenario.
+- [ ] Inputs, outputs, and edge cases conform to the specification.
+- [ ] No regressions occur in existing modules.
+- [ ] Observability, logs, and metrics are in place.
+- [ ] QA and UX validations pass.
 
-#### `src/controllers/AuthController.js`
-**Purpose:** Handle authentication HTTP requests  
-**Exports:** `{ register, login, logout }`  
-**Implementation:**
-```javascript
-// Skeleton structure
-const bcrypt = require('bcrypt');
-const { generateToken } = require('../services/TokenService');
-const { User } = require('../models/User');
-const { validateEmail, validatePassword } = require('../validators/auth');
+---
 
-async function register(req, res) {
-  try {
-    // 1. Extract email and password from req.body
-    const { email, password } = req.body;
-    
-    // 2. Validate inputs
-    if (!validateEmail(email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
+## 4. Technical Implementation Details
+Provide detailed implementation steps, file modifications, and code examples required to deliver this feature.
+
+### 4.1 Code Changes
+List every file to create or modify, with a short explanation.
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/components/QRScanner.tsx` | Create | React Native camera scanner component. |
+| `src/hooks/useQRParser.ts` | Create | Hook for QR parsing and validation logic. |
+| `src/screens/Onboarding.tsx` | Modify | Integrate QR scanner into onboarding flow. |
+
+**Example Code Snippet**
+```tsx
+// src/hooks/useQRParser.ts
+import { useState } from 'react';
+
+export function useQRParser() {
+  const [parsedUrl, setParsedUrl] = useState<string | null>(null);
+
+  const onScan = (payload: string) => {
+    try {
+      const url = new URL(payload);
+      if (!['http:', 'https:'].includes(url.protocol))
+        throw new Error('Unsupported scheme');
+      setParsedUrl(url.origin);
+    } catch (err) {
+      console.error('Invalid QR payload', err);
     }
-    
-    if (!validatePassword(password)) {
-      return res.status(400).json({ 
-        error: 'Password must be 8+ chars with 1 uppercase and 1 number' 
-      });
-    }
-    
-    // 3. Check if user exists
-    const existing = await User.findByEmail(email);
-    if (existing) {
-      return res.status(409).json({ error: 'Email already registered' });
-    }
-    
-    // 4. Hash password (bcrypt, 10 rounds)
-    const passwordHash = await bcrypt.hash(password, 10);
-    
-    // 5. Create user record
-    const user = await User.create({
-      email,
-      password_hash: passwordHash,
-      email_verified: false
-    });
-    
-    // 6. Send verification email (async, don't await)
-    EmailService.sendVerification(user.id, email);
-    
-    // 7. Return success response
-    return res.status(201).json({
-      userId: user.id,
-      message: 'Verification email sent'
-    });
-    
-  } catch (error) {
-    console.error('Registration error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-}
+  };
 
-async function login(req, res) {
-  // Implementation details...
-}
-
-module.exports = { register, login };
-```
-
-#### `src/models/User.js`
-**Purpose:** User data model and database operations  
-**Exports:** `User` class  
-**Implementation:**
-```javascript
-// Database query methods needed
-class User {
-  static async findByEmail(email) {
-    const query = 'SELECT * FROM users WHERE email = $1';
-    const result = await db.query(query, [email]);
-    return result.rows[0];
-  }
-  
-  static async create({ email, password_hash, email_verified }) {
-    const query = `
-      INSERT INTO users (email, password_hash, email_verified)
-      VALUES ($1, $2, $3)
-      RETURNING id, email, created_at
-    `;
-    const result = await db.query(query, [email, password_hash, email_verified]);
-    return result.rows[0];
-  }
-  
-  static async updatePassword(userId, newPasswordHash) {
-    // Implementation...
-  }
+  return { parsedUrl, onScan };
 }
 ```
 
-### Files to Modify
+### 4.2 Database / Data Model Changes
+Describe schema, collection, or entity updates.
 
-#### `src/routes/auth.js`
-**Current State:** File exists with basic Express router setup  
-**Modifications Required:**
-```javascript
-// ADD these routes to existing router
-router.post('/register', 
-  rateLimiter({ max: 5, windowMs: 60000 }), // 5 attempts per minute
-  AuthController.register
-);
+| Entity | Change | Description |
+|--------|--------|-------------|
+| `devices` | Add `qrConfigured: boolean` | Marks if setup was completed via QR scan. |
+| `settings` | Add `scannerEnabled: boolean` | Toggles scanner availability. |
 
-router.post('/login',
-  rateLimiter({ max: 5, windowMs: 60000 }),
-  AuthController.login  
-);
-
-// Existing code remains unchanged
-```
-
-#### `src/middleware/validators.js`
-**Current State:** Basic validation middleware exists  
-**Add These Functions:**
-```javascript
-function validateEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-}
-
-function validatePassword(password) {
-  // Min 8 chars, 1 uppercase, 1 number
-  const regex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
-  return regex.test(password);
-}
-```
-
-### Database Migrations
-
-#### `migrations/002_add_auth_fields.sql`
+**Example Migration**
 ```sql
--- Run if not already applied from previous story
-ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
-
--- Add indexes for performance
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
+ALTER TABLE devices ADD COLUMN qr_configured BOOLEAN DEFAULT FALSE;
 ```
+
+### 4.3 API / Integration Details
+List any REST, GraphQL, or socket API endpoints affected or introduced.
+
+| Method | Endpoint | Purpose | Auth |
+|--------|----------|---------|------|
+| POST | `/api/v3/device/configure` | Registers configuration from QR data. | Bearer Token |
+| GET | `/api/v3/device/:id/config` | Retrieves device configuration. | Bearer Token |
+
+**Example Request**
+```bash
+curl -X POST https://demo.valert.io/api/v3/device/configure \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId": "abc123", "configUrl": "https://valert.io"}'
+```
+
+### 4.4 UI / UX Details
+Describe user interface requirements, states, and accessibility needs.
+
+- Display camera frame overlay and instructional text.
+- Show success checkmark animation on valid scan.
+- Accessibility: label "Align QR code within frame."
+- On failure: display toast "Invalid QR Code" and remain in scan state.
+
+**Example**
+```tsx
+<View style={styles.overlay}>
+  <Text style={styles.prompt}>Align QR code within frame</Text>
+</View>
+```
+
+### 4.5 Configuration / Environment
+List environment variables, flags, or settings related to the story.
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `QR_SCANNER_ENABLED` | Feature flag to toggle scanner visibility | `false` |
+| `SCAN_RETRY_DELAY` | Cooldown between scans (ms) | `2000` |
 
 ---
 
-## API Contracts
+## 5. Testing Strategy
+Describe how this story will be verified through automated and manual testing.
 
-### Endpoint: `POST /auth/register`
+### 5.1 Unit Tests
+- Test QR parsing and scheme validation logic.
+- Validate that unsupported schemes throw expected errors.
+- Ensure internal state updates correctly after successful scan.
 
-**Request:**
-```http
-POST /auth/register HTTP/1.1
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "SecurePass123"
-}
-```
-
-**Success Response (201):**
-```json
-{
-  "userId": "550e8400-e29b-41d4-a716-446655440000",
-  "message": "Verification email sent"
-}
-```
-
-**Error Responses:**
-```javascript
-// 400 - Validation Error
-{
-  "error": "Invalid email format"
-}
-// OR
-{
-  "error": "Password must be 8+ chars with 1 uppercase and 1 number"
-}
-
-// 409 - Conflict
-{
-  "error": "Email already registered"
-}
-
-// 429 - Rate Limited
-{
-  "error": "Too many attempts. Try again later."
-}
-
-// 500 - Server Error
-{
-  "error": "Internal server error"
-}
-```
-
-### Endpoint: `POST /auth/login`
-
-**Request:**
-```http
-POST /auth/login HTTP/1.1
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "SecurePass123"
-}
-```
-
-**Success Response (200):**
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresIn": 86400,
-  "userId": "550e8400-e29b-41d4-a716-446655440000"
-}
-```
-
-**Error Responses:**
-```javascript
-// 401 - Authentication Failed (same for all auth failures)
-{
-  "error": "Invalid email or password"
-}
-
-// 403 - Email Not Verified
-{
-  "error": "Please verify your email before logging in"
-}
-```
-
----
-
-## Business Logic Requirements
-
-### Password Hashing
-- Use bcrypt with 10 salt rounds
-- Never store plain text passwords
-- Never log password values
-
-### Email Validation
-- Must be valid email format
-- Case-insensitive comparison
-- Trim whitespace before validation
-
-### Rate Limiting
-- 5 attempts per minute per IP
-- Return 429 status when exceeded
-- Log repeated failures for security monitoring
-
-### Session Management
-- JWT tokens expire in 24 hours
-- Include userId and email in token payload
-- Use HS256 algorithm for signing
-
----
-
-## Error Handling
-
-### Expected Errors to Handle
-| Scenario | Response Code | Response Body | Log Level |
-|----------|--------------|---------------|-----------|
-| Invalid email format | 400 | `{error: "Invalid email format"}` | INFO |
-| Weak password | 400 | `{error: "Password requirements..."}` | INFO |
-| Duplicate email | 409 | `{error: "Email already registered"}` | INFO |
-| Login failed | 401 | `{error: "Invalid email or password"}` | WARN |
-| Database down | 500 | `{error: "Internal server error"}` | ERROR |
-| Email service down | 201 | Success (queue for retry) | WARN |
-
-### Logging Requirements
-```javascript
-// Log format for all authentication events
-{
-  timestamp: new Date().toISOString(),
-  event: 'auth.register|auth.login|auth.failed',
-  userId: user?.id,
-  email: email, // hash this in production logs
-  ip: req.ip,
-  userAgent: req.headers['user-agent'],
-  success: boolean,
-  errorReason: string // if failed
-}
-```
-
----
-
-## Test Implementation
-
-### Unit Tests Required
-
-#### `test/controllers/AuthController.test.js`
-```javascript
-describe('AuthController', () => {
-  describe('register', () => {
-    it('should create user with valid inputs', async () => {
-      // Test implementation
-    });
-    
-    it('should return 400 for invalid email', async () => {
-      // Test implementation  
-    });
-    
-    it('should return 409 for duplicate email', async () => {
-      // Test implementation
-    });
-    
-    it('should hash password before storing', async () => {
-      // Verify bcrypt.hash was called
-    });
-  });
+**Example (Jest)**
+```ts
+it('rejects unsupported schemes', () => {
+  expect(() => onScan('ftp://invalid.com')).toThrow();
 });
 ```
 
-### Integration Tests Required
+### 5.2 Integration / E2E Tests
+- Simulate valid and invalid QR scans.
+- Verify backend API calls and state transitions.
+- Confirm telemetry events (`qr_scan_success`, `qr_scan_invalid`) fire correctly.
 
-#### `test/integration/auth.test.js`
-```javascript
-describe('Auth Endpoints', () => {
-  it('POST /auth/register - full flow', async () => {
-    const res = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'test@example.com',
-        password: 'TestPass123'
-      });
-      
-    expect(res.status).toBe(201);
-    expect(res.body.userId).toBeDefined();
-    
-    // Verify user in database
-    const user = await User.findByEmail('test@example.com');
-    expect(user).toBeDefined();
-    expect(user.password_hash).not.toBe('TestPass123');
-  });
-});
+**Example (Detox)**
+```js
+await element(by.id('qrScanner')).tap();
+await expect(element(by.text('Align QR code within frame'))).toBeVisible();
 ```
 
-### Test Data Required
-```javascript
-// Test fixtures
-const testUsers = [
-  {
-    email: 'existing@example.com',
-    password: 'ExistingPass123',
-    password_hash: '$2b$10$...' // bcrypt hash
-  },
-  {
-    email: 'verified@example.com',
-    password: 'VerifiedPass123',
-    email_verified: true
-  }
-];
-```
+### 5.3 Manual Testing
+1. Open the app, enable the feature flag, and navigate to the scanner screen.
+2. Test both valid and invalid codes.
+3. Observe logs, telemetry, and UI transitions.
+4. Ensure the device record updates appropriately in the backend.
 
 ---
 
-## Acceptance Criteria Checklist
+## 6. Observability & Rollback
 
-### Functional Requirements
-- [ ] User can register with email and password
-- [ ] Duplicate emails are rejected with 409
-- [ ] Passwords are hashed with bcrypt (10 rounds)
-- [ ] Registration sends verification email
-- [ ] Login returns JWT token valid for 24 hours
-- [ ] Login fails return generic error message
-- [ ] Rate limiting prevents brute force (5/minute)
+### Logging
+| Event | Description |
+|-------|-------------|
+| `qr_scan_start` | User opened scanner screen |
+| `qr_scan_success` | Valid code scanned |
+| `qr_scan_invalid` | Invalid payload rejected |
+| `qr_scan_cancel` | User exited scanner |
 
-### Technical Requirements
-- [ ] All endpoints return correct HTTP status codes
-- [ ] Responses match specified JSON structure
-- [ ] Database transactions are atomic
-- [ ] Errors are logged appropriately
-- [ ] No sensitive data in logs
-- [ ] Code passes linting rules
-- [ ] Test coverage > 80%
+### Metrics
+- Mean scan time
+- Error rate by platform
+- Permission denial frequency
 
-### Performance Requirements
-- [ ] Registration completes in < 500ms
-- [ ] Login completes in < 200ms
-- [ ] Database queries use indexes
-- [ ] No N+1 query problems
+### Rollback Procedure
+1. Disable the `QR_SCANNER_ENABLED` flag to remove scanner access.
+2. Verify app navigation and onboarding flows still work without QR scanning.
+3. Clean up telemetry dashboards or temporary metrics as needed.
 
 ---
 
-## Development Checklist
-
-### Before Starting
-- [ ] Pull latest code from main branch
-- [ ] Install dependencies: `npm install`
-- [ ] Run existing tests: `npm test`
-- [ ] Setup local database with migrations
-- [ ] Configure environment variables
-
-### During Development
-- [ ] Create feature branch: `feature/[story-id]-description`
-- [ ] Implement code following specifications
-- [ ] Write unit tests alongside code
-- [ ] Run tests frequently
-- [ ] Commit with meaningful messages
-
-### Before Completion
-- [ ] All acceptance criteria met
-- [ ] All tests passing
-- [ ] Code reviewed (self-review first)
-- [ ] API documentation updated
-- [ ] No console.log statements
-- [ ] Error handling complete
-- [ ] Performance requirements met
-
-### Definition of Done
-- [ ] Code merged to main branch
-- [ ] Tests passing in CI/CD
-- [ ] Deployed to staging environment
-- [ ] Smoke tests pass on staging
-- [ ] Documentation updated
-- [ ] No critical security issues
+## 7. Definition of Done
+- [ ] All acceptance criteria met.
+- [ ] Unit, integration, and manual tests completed.
+- [ ] Observability events verified in production-like environment.
+- [ ] Linked to architecture plan and relevant ADRs.
+- [ ] Code merged, reviewed, and deployed to staging.
+- [ ] Rollback and feature flag toggling tested successfully.
 
 ---
 
-## Notes & Clarifications
-
-### Security Considerations
-- Never return whether email exists in error messages
-- Use constant-time comparison for password checks
-- Implement CAPTCHA if registration abuse detected
-- Monitor for credential stuffing patterns
-
-### Future Enhancements (Not in This Story)
-- OAuth integration
-- Two-factor authentication
-- Password strength meter
-- Account lockout after failed attempts
-
-### Dependencies on Other Teams
-- Email Service team: Verification email template ready
-- DevOps: Redis instance provisioned
-- Security: JWT secret configured in vault
-
----
-
-**Story Generated:** [Date]  
-**Scrum Master:** [Agent ID]  
-**Source:** [Implementation Plan v1.0]  
-**Sprint:** [Sprint Number]
+## 8. Notes & References
+- **Source Plan:** `<architecture-plan-filename>`
+- **Related ADRs:** ADR-001 Camera Library, ADR-003 URL Validation
+- **Design Mock:** `/ai-docs/designs/qr-scan-ui.png`
+- **Dependencies:** `react-native-camera-kit`, `react-navigation@6+`
+- **Feature Flag:** `QR_SCANNER_ENABLED`
+- **Complexity:** Medium
+- **Target Platforms:** iOS & Android
+- **Team:** Mobile Engineering
