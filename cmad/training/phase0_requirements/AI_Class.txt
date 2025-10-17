@@ -1,0 +1,90 @@
+Overview of the AI development process with an example feature.
+
+
+I have been given a task, a new feature with the following requirements:
+
+- Allow users to create email lists which can be attached to Automated Actions
+- If the automated action is triggered, every address in that list should receive an email notification
+- Though the VEMASS project has a default email server using AWS, allow the client to optionally set up their own SMTP Server
+- The SMTP set-up should mirror the functionality of the Site Manager project
+
+Phase 1: Research and Pre-planning.
+
+In this phase I'm asking myself: In a very top-level way, how will I accomplish the task I've been given and what information will the AI planner agent need to create a comprehensive implementation plan/epic to accomplish that task.
+
+As far as "how will I accomplish this task", I'm creating a very basic framework, I will need:
+
+- A new model called EmailList with an array of email addresses
+- One or more email lists can be attached to an Automated Action
+- The user can set up their own SMTP server, this will probably use the settings model framework to create new key/value pairs, and have its own settings page
+
+The AI will need:
+
+- To research the Site Manager project and create a document explaining the SMTP settings and email 
+
+Prompt to researcher agent:
+
+**IMPORTANT:  Read .claude/agents/researcher.md and become the researcher agent for this task**
+
+As the researcher agent... Examine the screenshot at ref/SMTPScreenshot.png.  I'd like you to find that page in the vmass codebase (Project at /home/chad/Valcom/vmass) Examine the front end and back end implmentation of their email setup.  How does it work?  What is the logic flow? What do each of the variables mean in the UI configuration page (the image I gave you)  Think hard and create a comprehensive md explaining all this.
+
+I then do a quick review of the research document, and tell the AI if any changes need to be made.  Always thinking in terms of how this document will help the planner agent create an implmentation plan.
+
+Phase 2:  Architecture
+
+In this phase I create my deatiled instructions for the planner agent who will create an epic/implmentation plan. This plan will be used by the scrum-master agent to create detailed user stories (issues)
+
+Prompt:
+
+**IMPORTANT:  Read .claude/agents/planner.md and become the planner agent. Think hard**
+
+- Read the research document at ai-docs/research/vmass-email-smtp-analysis.md and use that as a reference for the SMTP fields
+
+As the planner agent, create the following plan:
+
+1. Add SMTP settings to the settings object.  This involves updating the initData scripts for new installs (scripts/database/initCiData.sh
+scripts/database/initData.sh
+scripts/database/initTestData.sh), and updating the upgrade script for existing installs (scripts/release/ubuntu22/upgradeUbuntu22.sh) Note how the upgrade script conditionally adds new settings rows.  There should be a setting field for each item required for SMTP
+
+2. Create an SMTP settings page which will exist in the settings accordian, and require the same permissions as the settings > general page to appear.  Use the general settings UI page as a refrerence for making the specific SMTP settings appear on this new page, and connect it to the backend settings API the same way general settings does.  You should be able to use the current settings API without any changes.
+
+3. Create a new EmailList model/controller/service/API.  EmailList will be a simple model which contains a Label, and an array of strings (Emails: ["","",""]) using PSQL array. EmailList permissions will use the same permission requirements as events/automated actions (automated, get:1, RUD: 2)  The model shoudl have MANY-TO-MANY relationship with Events (automated actions)
+
+4. Create the UI EmailList page in Settings accordian.  Page will appear if they have automated: 1, and be editable if they automated: 2.  This will be a basic UI where they can add, edit, delete Email Lists.
+
+5. Events/Automated Actions:  Update the Event UI page to include an email lists field, email lists can now be added, removed from an Automated Action object
+
+7. Email list processing.  Find the place in the backend where user account emails are processed on events/automated actions.  Process the email lists here.  Note that IF the system has SMTP settings you will use those email settings, and if it does not, you will use the default email server (Valcom AWS email server) which already exists in the system.
+
+There will now be a comprehensive implementation plan.  This is the most important document in the process.  Carefully examine and review it, prmopting the AI to make neccesary changes.  After I determine the plan looks correct, I also review the "Implematation Order Reccomendation section."  A lot of times the user stories it recommends can be combined in larger stories, so the scrum master and developer can knock out larger chunks of the feature in fewer steps.  In doing this I also consider what will good break points for testing?
+
+Phase 3: Story Creation:
+
+This phase will use the scrum-master agent, and developer agent.  Depending on the size and scope of the implmentation plan, you can get the scrum-master to make a few user stories, or a single story that covers the whole plan.
+
+Prompt:
+**IMPORTANT:  Read .claude/agents/scrum-master.md and become the scrum-master agent for this task. Think hard**
+
+Read the implmenation plan at ai-docs/plans/2025-10-16-smtp-email-list-plan.md. Create a user story which will combine the first 2 stories in the Implmentation Order Reccomendation:
+
+1. **Story 1**: SMTP Settings Storage
+   - Update initData.sh, upgradeUbuntu22.sh scripts
+   - Test database initialization
+   - Estimated: 1 story point
+
+2. **Story 2**: SMTP Settings UI
+   - Create SmtpSettings.tsx component
+   - Add navigation and routing
+   - Implement form and validation
+   - Estimated: 3 story points
+   
+  At the end of this step you should have a comprehensive user story.  Check it for accuracy and prompt the AI to make any changes.  If there are more stories to create, you can either create all the stories before writing any code, or run the developer agent to write the code after each story has been written.  I might choose to execute each story before having the scrum-master create the next one if the epic is particulary complex and I want to keep a closer eye on what the AI is doing.  And if needed update the implemntation plan before getting sm to make subsequent stories.  Or just keep it simple and write all the stories before writing any code.
+  
+Phase 4: Execution:
+
+**IMPORTANT:  Read .claude/agents/developer.md and become the developer agent for this task.**
+
+As the developer agent, read the story ai-docs/stories/smtp-email-list-story-1.md and execute.  We will skip integration testing.
+
+The developer agent will read the user story and begin writing the code.  With Claude Code you can choose to have auto-edits on and review everything at the end, or have it so you have to approve every edit.  I generally like to acceot every edit so I keep an eye on what the AI is doing and just in to give it insturctions if I need to.  If you've been reviewing the plan and user stories carefully, there shouldn't be many insturctions you need to give it.
+

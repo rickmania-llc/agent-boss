@@ -1,0 +1,6 @@
+I have given the following requirements:
+
+- Allow users to create email lists which can be attached to Automated Actions
+- If the automated action is triggered, every address in that list should receive an email notification
+- Though the project has a default email server using AWS, allow the client to optionally set up their own SMTP Server
+- The SMTP set-up should mirror the functionality of the Site Manager project

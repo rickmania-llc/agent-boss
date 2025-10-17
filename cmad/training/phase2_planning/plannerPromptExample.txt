@@ -1,0 +1,19 @@
+**IMPORTANT:  Read .claude/agents/planner.md and become the planner agent**
+
+- Read the research document at ai-docs/research/vmass-email-smtp-analysis.md and use that as a reference for the SMTP fields
+
+As the planner agent, create the following plan:
+
+1. Add SMTP settings to the settings object.  This involves updating the initData scripts for new installs (scripts/database/initCiData.sh
+scripts/database/initData.sh
+scripts/database/initTestData.sh), and updating the upgrade script for existing installs (scripts/release/ubuntu22/upgradeUbuntu22.sh) Note how the upgrade script conditionally adds new settings rows.  There should be a setting field for each item required for SMTP
+
+2. Create an SMTP settings page which will exist in the settings accordian, and require the same permissions as the settings > general page to appear.  Use the general settings UI page as a refrerence for making the specific SMTP settings appear on this new page, and connect it to the backend settings API the same way general settings does.  You should be able to use the current settings API without any changes.
+
+3. Create a new EmailList model/controller/service/API.  EmailList will be a simple model which contains a Label, and an array of strings (Emails: ["","",""]) using PSQL array. EmailList permissions will use the same permission requirements as events/automated actions (automated, get:1, RUD: 2)  The model shoudl have MANY-TO-MANY relationship with Events (automated actions)
+
+4. Create the UI EmailList page in Settings accordian.  Page will appear if they have automated: 1, and be editable if they automated: 2.  This will be a basic UI where they can add, edit, delete Email Lists.
+
+5. Events/Automated Actions:  Update the Event UI page to include an email lists field, email lists can now be added, removed from an Automated Action object
+
+7. Email list processing.  Find the place in the backend where user account emails are processed on events/automated actions.  Process the email lists here.  Note that IF the system has SMTP settings you will use those email settings, and if it does not, you will use the default email server (Valcom AWS email server) which already exists in the system.

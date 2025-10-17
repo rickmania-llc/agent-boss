@@ -1,0 +1,3 @@
+**IMPORTANT:  Read .claude/agents/researcher.md and become the researcher agent for this task**
+
+As the researcher agent... Examine the screenshot at ref/SMTPScreenshot.png.  I'd like you to find that page in the vmass codebase (Project at /home/chad/Valcom/vmass) Examine the front end and back end implmentation of their email setup.  How does it work?  What is the logic flow? What do each of the variables mean in the UI configuration page (the image I gave you)  Think hard and create a comprehensive md explaining all this.

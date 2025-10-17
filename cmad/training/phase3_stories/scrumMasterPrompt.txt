@@ -1,0 +1,14 @@
+**IMPORTANT:  Read .claude/agents/scrum-master.md and become the scrum-master agent for this task. Think hard**
+
+Read the implmentation plan at ai-docs/plans/2025-10-16-smtp-email-list-plan.md. Create a user story which will combine the first 2 stories in the Implmentation Order Reccomendation:
+
+1. **Story 1**: SMTP Settings Storage
+   - Update initData.sh, upgradeUbuntu22.sh scripts
+   - Test database initialization
+   - Estimated: 1 story point
+
+2. **Story 2**: SMTP Settings UI
+   - Create SmtpSettings.tsx component
+   - Add navigation and routing
+   - Implement form and validation
+   - Estimated: 3 story points

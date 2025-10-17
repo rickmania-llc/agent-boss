@@ -1,0 +1,3 @@
+**IMPORTANT:  Read .claude/agents/developer.md and become the developer agent for this task.**
+
+As the developer agent, read the story ai-docs/stories/smtp-email-list-story-1.md and execute.  We will skip integration testing.
